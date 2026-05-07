@@ -1,0 +1,442 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NNTR | Fleet Intelligence & AI Logistics</title>
+    <!-- Frameworks & Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        :root {
+            --nntr-bg: #0f172a;
+            --nntr-surface: #1e293b;
+            --nntr-primary: #10b981;
+            --nntr-accent: #f59e0b;
+            --gemini-spark: #6366f1;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--nntr-bg);
+            color: var(--text-main);
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .nntr-nav {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 0;
+        }
+
+        /* Hero & Search */
+        .hero-section {
+            padding: 80px 0 40px;
+            text-align: center;
+        }
+
+        .search-box {
+            background: var(--nntr-surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            margin: -20px auto 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .form-control-nntr {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+        }
+
+        .form-control-nntr:focus {
+            background: #0f172a;
+            border-color: var(--nntr-primary);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        }
+
+        /* Dashboard Components */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+            display: none; /* Hidden until search */
+        }
+
+        .map-card {
+            background: var(--nntr-surface);
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            height: 550px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .map-placeholder {
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .v-marker {
+            width: 50px;
+            height: 50px;
+            background: var(--nntr-primary);
+            border: 4px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px var(--nntr-primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Sidebar Panels */
+        .panel {
+            background: var(--nntr-surface);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .ai-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gemini-spark);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .terminal-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #10b981;
+            background: #020617;
+            padding: 15px;
+            border-radius: 12px;
+            height: 120px;
+            overflow-y: auto;
+            border: 1px solid #1e293b;
+        }
+
+        .btn-ai-action {
+            width: 100%;
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            text-align: left;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-ai-action:hover {
+            background: var(--gemini-spark);
+            color: white;
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.6s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Loader */
+        .ai-loading {
+            display: none;
+            padding: 20px;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <nav class="nntr-nav sticky-top">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <i class='bx bxs-traffic-receiver fs-2 text-primary'></i>
+                <span class="fw-800 fs-4 tracking-tight">NNTR <span class="text-primary">FLEET</span></span>
+            </div>
+            <div class="d-flex gap-4 small fw-600 align-items-center">
+                <span class="text-dim d-none d-md-inline"><i class='bx bx-check-shield'></i> FEDERAL COMPLIANCE ACTIVE</span>
+                <button class="btn btn-outline-light btn-sm rounded-pill px-3">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        
+        <section class="hero-section">
+            <span class="badge bg-primary bg-opacity-10 text-primary mb-3 px-3 py-2 rounded-pill">NIGERIAN LOGISTICS AUTHORITY</span>
+            <h1 class="display-4 fw-800 mb-3">Intelligent Asset <span class="text-primary">Tracking</span></h1>
+            <p class="text-dim lead mx-auto" style="max-width: 600px;">Authorized access to real-time telemetry, location data, and AI-powered route optimization for registered commercial vehicles.</p>
+        </section>
+
+        <!-- Search UI -->
+        <section class="search-box">
+            <div class="row g-3">
+                <div class="col-md-9">
+                    <input type="text" id="plateSearch" class="form-control-nntr w-100" placeholder="Enter Registered Plate (e.g. LAG-552-XP)">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100 h-100 rounded-3 fw-bold" onclick="launchFleetDashboard()">
+                        <i class='bx bx-radar me-1'></i> SEARCH
+                    </button>
+                </div>
+            </div>
+            <p class="small text-dim mt-3 mb-0 text-center">
+                <i class='bx bx-lock-alt'></i> Only vehicles with active NNTR hardware pings are discoverable.
+            </p>
+        </section>
+
+        <!-- Dashboard Display -->
+        <div id="mainDashboard" class="dashboard-grid fade-in">
+            
+            <!-- Map & Primary Info -->
+            <div class="main-column">
+                <div class="map-card shadow-lg mb-4">
+                    <div class="map-placeholder" id="mapView">
+                        <div class="v-marker">
+                            <i class='bx bxs-truck fs-3'></i>
+                        </div>
+                        <div class="position-absolute top-0 start-0 p-4">
+                            <div class="badge bg-dark bg-opacity-75 p-3 rounded-4 backdrop-blur border border-white border-opacity-10 text-start">
+                                <div class="text-dim x-small mb-1">CURRENT LOCATION</div>
+                                <div class="fw-bold fs-5" id="dispCity">Lagos, Nigeria</div>
+                                <div class="text-primary small" id="dispCoords">6.5244° N, 3.3792° E</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="panel h-100">
+                            <h6 class="text-dim small fw-bold mb-3 uppercase">TELEMETRY STREAM</h6>
+                            <div class="terminal-text" id="telemetryStream">
+                                > System Ready...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="panel h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-dim small fw-bold uppercase m-0">HARDWARE STATUS</h6>
+                                <span class="badge bg-success">ONLINE</span>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-4 border-end border-white border-opacity-10">
+                                    <div class="text-dim x-small">SPEED</div>
+                                    <div class="fw-800 fs-4" id="statSpeed">64 <span class="fs-6 fw-normal">km/h</span></div>
+                                </div>
+                                <div class="col-4 border-end border-white border-opacity-10">
+                                    <div class="text-dim x-small">FUEL LEVEL</div>
+                                    <div class="fw-800 fs-4" id="statFuel">78 <span class="fs-6 fw-normal">%</span></div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-dim x-small">BATTERY</div>
+                                    <div class="fw-800 fs-4 text-warning">82%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Strategist Column -->
+            <div class="ai-column">
+                <div class="panel">
+                    <div class="ai-header">
+                        <div class="ai-icon"><i class='bx bxs-bolt'></i></div>
+                        <div>
+                            <h6 class="fw-800 m-0">Gemini Strategist</h6>
+                            <div class="x-small text-dim">AI Logistics Intelligence</div>
+                        </div>
+                    </div>
+
+                    <div class="ai-actions">
+                        <button class="btn-ai-action" onclick="askGemini('route')">
+                            <i class='bx bx-trending-up me-2'></i> Optimize Route Safety
+                        </button>
+                        <button class="btn-ai-action" onclick="askGemini('risk')">
+                            <i class='bx bx-shield-warning me-2'></i> Regional Risk Check
+                        </button>
+                        <button class="btn-ai-action" onclick="askGemini('compliance')">
+                            <i class='bx bx-clipboard me-2'></i> Legal Compliance Audit
+                        </button>
+                    </div>
+
+                    <div id="aiLoader" class="ai-loading">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                        <div class="small mt-2 text-dim">Analyzing spatial data...</div>
+                    </div>
+
+                    <div id="aiResult" class="mt-4 p-3 rounded-4 bg-white bg-opacity-5 small text-dim" style="line-height: 1.6; display: none;">
+                        <!-- AI Results inject here -->
+                    </div>
+                </div>
+
+                <div class="panel text-center">
+                    <i class='bx bx-support fs-2 mb-2 text-dim'></i>
+                    <h6 class="fw-bold mb-1">Human Dispatch</h6>
+                    <p class="x-small text-dim mb-3">Emergency override required?</p>
+                    <button class="btn btn-sm btn-outline-danger w-100 rounded-pill">OPEN COMMS</button>
+                </div>
+            </div>
+
+        </div>
+
+        <section id="emptyState" class="py-5 text-center text-dim">
+            <i class='bx bx-search fs-1 mb-3'></i>
+            <p>Perform a search to view real-time fleet intelligence.</p>
+        </section>
+
+    </main>
+
+    <footer class="py-5 mt-5 border-top border-white border-opacity-10">
+        <div class="container text-center text-dim x-small">
+            <p class="mb-2 uppercase tracking-widest fw-bold">Legal Transparency Notice</p>
+            <p style="max-width: 700px; margin: 0 auto;">NNTR Fleet platform is for registered commercial use only. All data requests are cryptographically signed and stored for 5 years per Nigeria Data Protection Act (NDPA). Unauthorized tracking is a federal offense.</p>
+            <div class="mt-4">
+                &copy; 2026 National Transport Registry Authority
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripting -->
+    <script>
+        const apiKey = ""; // Handled by environment
+
+        // Dashboard State
+        function launchFleetDashboard() {
+            const plate = document.getElementById('plateSearch').value.toUpperCase();
+            if (!plate) return;
+
+            // Show UI
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('mainDashboard').style.display = 'grid';
+            
+            // Randomize Data for simulation
+            document.getElementById('dispCity').innerText = ["Lagos, Victoria Island", "Abuja, Central Area", "Port Harcourt, GRA", "Kano City Center"][Math.floor(Math.random()*4)];
+            document.getElementById('statSpeed').innerText = Math.floor(Math.random()*40 + 40) + " km/h";
+            document.getElementById('statFuel').innerText = Math.floor(Math.random()*40 + 50) + "%";
+
+            // Scroll
+            window.scrollTo({ top: 500, behavior: 'smooth' });
+
+            // Start Log simulation
+            startTelemetry(plate);
+        }
+
+        function startTelemetry(plate) {
+            const stream = document.getElementById('telemetryStream');
+            stream.innerHTML = `> INIT_SOCKET for ${plate}...`;
+            
+            const logs = [
+                "PING_OK: SAT_12_RSSI_98",
+                "SPD_LOCK: 62KM/H",
+                "GPS_FIX: 6.524N 3.379E",
+                "SENSOR_READ: TEMP_28C_FUEL_74%",
+                "PWR_STAT: ALT_14.2V_OK"
+            ];
+
+            let i = 0;
+            const interval = setInterval(() => {
+                const line = document.createElement('div');
+                line.innerHTML = `> [${new Date().toLocaleTimeString()}] ${logs[i % logs.length]}`;
+                stream.appendChild(line);
+                stream.scrollTop = stream.scrollHeight;
+                i++;
+                if (i > 50) clearInterval(interval);
+            }, 2500);
+        }
+
+        // Gemini API Interaction
+        async function askGemini(actionType) {
+            const plate = document.getElementById('plateSearch').value;
+            const loader = document.getElementById('aiLoader');
+            const resultBox = document.getElementById('aiResult');
+
+            loader.style.display = 'block';
+            resultBox.style.display = 'none';
+
+            let prompt = "";
+            let sys = "You are the NNTR AI Strategist. You specialize in Nigerian logistics, infrastructure, and transport law. Provide brief, data-driven, professional advice.";
+
+            switch(actionType) {
+                case 'route':
+                    prompt = `Provide a route safety and time optimization summary for vehicle ${plate} currently in ${document.getElementById('dispCity').innerText}. Consider Nigerian road conditions.`;
+                    break;
+                case 'risk':
+                    prompt = `Perform a regional risk assessment for vehicle ${plate}. Identify any known security checkpoints or high-risk zones in the surrounding territory.`;
+                    break;
+                case 'compliance':
+                    prompt = `Check the legal status for vehicle ${plate}. Based on telemetry (Speed: ${document.getElementById('statSpeed').innerText}), are there any immediate FRSC or state-level compliance concerns?`;
+                    break;
+            }
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: sys }] }
+                    })
+                });
+
+                const data = await response.json();
+                const output = data.candidates?.[0]?.content?.parts?.[0]?.text || "Strategy service unavailable.";
+                
+                loader.style.display = 'none';
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `<strong>AI Insight:</strong><br>${output}`;
+            } catch (err) {
+                loader.style.display = 'none';
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = "Error connecting to Gemini. Please verify API configuration.";
+            }
+        }
+    </script>
+</body>
+</html>
